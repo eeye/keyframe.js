@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <title>
+        Velocity Test
+    </title>
+    <style>
+        .container {
+            width: 500px;
+        }
+
+        .dummy {
+            display: block;
+            position: relative;
+            left: 0;
+            opacity: 0.65;
+            filter: alpha(opacity=65);
+            width: 15px;
+            height: 15px;
+            margin-bottom: 3px;
+            border-radius: 15px;
+            background-color: #3a3a3a;
+            /* 
+            transform: translateZ(0); */
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+        crossorigin="anonymous"></script>
+    <script src="../keyframe.js"></script>
+    <script>
+        $(document).ready(function () {
+
+
+            for (var i = 0; i < 500; i++) {
+                $('.container').append('<div class="dummy"></div>')
+            }
+
+
+
+            $('button').click(function () {
+
+                $('.dummy').each(function () {
+                    var channels = {}
+                    var dummy = $(this)
+
+                    channels['left'] = {
+                        'start_value': 0, 'onUpdate': function (value) {
+                            dummy.css('left', value + '%')
+                        }, 'keyframes': [[0.95, 85, 'easeInOutQuad']]
+                    }
+
+                    channels['opacity'] = {
+                        'start_value': 0.65, 'onUpdate': function (value) {
+                            dummy.css('opacity', value)
+                        }, 'keyframes': [[0.95, 1, 'easeInOutQuad']]
+                    }
+                    var keyframe = new KeyframeJS(channels)
+
+                    keyframe.start()
+                })
+            })
+
+        })
+    </script>
+</head>
+
+<body>
+    <button>Start</button>
+    <div class="container">
+    </div>
+</body>
+
+</html>
