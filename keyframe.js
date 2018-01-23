@@ -1,4 +1,4 @@
-KeyframeJS = function(channels) {
+KeyframeJS = function(channels, options) {
   var easings = {
     easeInQuad: function(t, b, c, d) {
       return c * (t /= d) * t + b
@@ -163,18 +163,35 @@ KeyframeJS = function(channels) {
     },
   }
 
+  if (typeof options !== 'object') options = {}
+
+  var _options = {
+    onUpdate:
+      typeof options.onUpdate === 'function' ? options.onUpdate : function() {},
+    onBegin:
+      typeof options.onBegin === 'function' ? options.onBegin : function() {},
+    onLoop:
+      typeof options.onLoop === 'function' ? options.onLoop : function() {},
+    onEnd: typeof options.onEnd === 'function' ? options.onEnd : function() {},
+    mode:
+      ['loopReverse', 'loop', 'stop'].indexOf(options.mode) > -1
+        ? options.mode
+        : 'stop',
+    speed: options.speed >= 0 ? options.speed : 1,
+    direction: [1, -1].indexOf(options.direction) > -1 ? options.direction : 1,
+    initial_time: options.initial_time >= 0 ? options.initial_time : 0,
+  }
   var _duration = 0,
     _channels = channels,
-    _current_time = 0,
+    _current_time = _options.initial_time,
     _last_now,
-    _direction = 1,
-    _speed = 1,
+    _direction = _options.direction,
+    _speed = _options.speed,
     _run = false,
     _target = null,
     _pause = false,
-    _mode = 'loopReverse', // loop - loopReverse - stop
+    _mode = _options.mode,
     _that = this
-
   function init() {
     getDuration()
   }
@@ -194,12 +211,15 @@ KeyframeJS = function(channels) {
     switch (_mode) {
       case 'loopReverse':
         _that.reverse()
+        _options.onLoop.call(_that)
         break
       case 'loop':
         _that.reset()
+        _options.onLoop.call(_that)
         break
       case 'stop':
         _that.stop()
+        _options.onEnd.call(_that)
         break
     }
   }
@@ -290,6 +310,7 @@ KeyframeJS = function(channels) {
     for (var key in _channels) {
       updateChannel(_channels[key])
     }
+    _options.onUpdate.call(_that, passed)
     if (
       (_current_time === _duration && _direction > 0) ||
       (_current_time === 0 && _direction < 0)
@@ -341,10 +362,27 @@ KeyframeJS = function(channels) {
 
   this.addChannel = function(name, channel) {
     _channels[name] = channel
+    _that.getDuration()
   }
 
   this.dropChannel = function(name) {
-    if (_channels[name]) delete _channels[name]
+    if (_channels[name]) {
+      delete _channels[name]
+      _that.getDuration()
+    }
+  }
+
+  this.setMode = function(mode) {
+    switch (mode) {
+      case 'loopReverse':
+      case 'loop':
+      case 'stop':
+        _mode = mode
+        break
+      default:
+        _mode = 'stop'
+        break
+    }
   }
 
   this.reverse = function() {
@@ -354,6 +392,7 @@ KeyframeJS = function(channels) {
   this.start = function() {
     _run = true
     animate()
+    _options.onBegin.call(_that)
   }
 
   this.stop = function() {
