@@ -1,4 +1,4 @@
-KeyframeJS = function(channels, options) {
+KeyframeJs = function(channels, options) {
   var easings = {
     easeInQuad: function(t, b, c, d) {
       return c * (t /= d) * t + b
@@ -225,7 +225,7 @@ KeyframeJS = function(channels, options) {
   }
 
   function updateChannel(channel) {
-    var keyframe = getKeyFrames(channel)
+    var keyframe = getKeyFrame(channel)
     var value_distance = keyframe.till_value - keyframe.from_value
     if (value_distance === 0) {
       channel.onUpdate.call(_that, keyframe.till_value)
@@ -250,7 +250,7 @@ KeyframeJS = function(channels, options) {
     channel.onUpdate.call(_that, value)
   }
 
-  function getKeyFrames(channel) {
+  function getKeyFrame(channel) {
     var keyframe = {
       from_time: 0,
       till_time: null,
