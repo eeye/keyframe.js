@@ -8,9 +8,12 @@
     <title>
         Velocity Test
     </title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
+        crossorigin="anonymous">
     <style>
-        .container {
-            width: 500px;
+        .droppoint {
+            height: 50vh;
+            overflow: auto;
         }
 
         .dummy {
@@ -34,37 +37,56 @@
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.5.1/velocity.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.2/velocity.min.js"></script>
     <script src="../keyframe.js"></script>
 </head>
 
 <body>
-    <select id="mode">
-        <option>KeyframeJS</option>
-        <option>Velocity</option>
-        <option>jQuery</option>
-    </select>
-    <select id="bubbles">
-        <option>100</option>
-        <option>250</option>
-        <option>500</option>
-        <option>1000</option>
-    </select>
-    <button id="start">Start</button>
-    <button id="stop">Stop</button>
     <div class="container">
+        <div class="row">
+            <div class="form-group col-xs-4">
+                <label for="mode">mode</label>
+                <select id="mode" size="6" class="form-control">
+                    <option selected="selected">KeyframeJS</option>
+                    <option value="keyopti">KeyframeJS (optimal)</option>
+                    <option>Velocity</option>
+                    <option value="veloopti">Velocity (optimal)</option>
+                    <option>jQuery</option>
+                    <option value="jqueryopti">jQuery (optimal)</option>
+                </select>
+            </div>
+            <div class="form-group col-xs-4">
+                <label for="bubbles">Bubbles</label>
+                <select id="bubbles" size="6" class="form-control">
+                    <option>100</option>
+                    <option selected="selected">250</option>
+                    <option>500</option>
+                    <option>1000</option>
+                    <option>2500</option>
+                    <option>5000</option>
+                </select>
+            </div>
+            <div class="form-group col-xs-4">
+                <label for="animations">Loops</label>
+                <select id="animations" size="2" class="form-control">
+                    <option selected="selected">4</option>
+                    <option>10</option>
+                </select>
+            </div>
+            <button id="start" class="button btn">Start</button>
+        </div>
+    </div>
+    <div class="container droppoint">
     </div>
 
     <script>
         var keyframe;
-        var run = false;
 
 
         $('#start').click(function () {
-            $(this).hide();
-            $('#stop').show();
+            $('#start').hide();
             for (var i = 0; i < $('#bubbles').val(); i++) {
-                $('.container').append('<div class="dummy"></div>')
+                $('.droppoint').append('<div class="dummy"></div>')
             }
             switch ($('#mode').val()) {
                 case 'KeyframeJS':
@@ -76,28 +98,22 @@
                 case 'Velocity':
                     startVelocity();
                     break;
-            }
-        })
+                case 'keyopti':
+                    startKeyframeJSOptimal();
+                    break;
+                case 'veloopti':
+                    startVelocityOptimal();
+                    break;
+                case 'jqueryopti':
+                    startjQueryOptimal();
+                    break;
 
-        $('#stop').click(function () {
-            $(this).hide();
-            $('#start').show();
-            switch ($('#mode').val()) {
-                case 'KeyframeJS':
-                    stopKeyframeJS();
-                    break;
-                case 'jQuery':
-                    stopjQuery();
-                    break;
-                case 'Velocity':
-                    stopVelocity();
-                    break;
             }
-            $('.dummy').remove()
         })
 
         function startKeyframeJS() {
             $('.dummy').each(function () {
+                var count = 0;
                 var channels = {}
                 var dummy = $(this)
 
@@ -112,59 +128,119 @@
                         dummy.css('opacity', value)
                     }, 'keyframes': [[0.95, 1, 'easeInOutQuad']]
                 }
-                keyframe = new KeyframeJS(channels)
+                keyframe = new KeyframeJS(channels, {
+                    mode: 'loopReverse', onLoop: function () {
+                        if (count == $('#animations').val() - 1) {
+                            this.stop()
+                            $('#start').show();
+                            $('.dummy').remove()
+                        }
+                        count++
+                    }
+                })
                 keyframe.start()
             })
         }
 
-        function stopKeyframeJS() {
-            keyframe.stop()
+        function startKeyframeJSOptimal() {
+            var count = 0;
+            var channels = {}
+            var dummy = $('.dummy')
+
+            channels['left'] = {
+                'start_value': 0, 'onUpdate': function (value) {
+                    dummy.css('left', value + '%')
+                }, 'keyframes': [[0.95, 85, 'easeInOutQuad']]
+            }
+
+            channels['opacity'] = {
+                'start_value': 0.65, 'onUpdate': function (value) {
+                    dummy.css('opacity', value)
+                }, 'keyframes': [[0.95, 1, 'easeInOutQuad']]
+            }
+            keyframe = new KeyframeJS(channels, {
+                mode: 'loopReverse', onLoop: function () {
+                    if (count == $('#animations').val() - 1) {
+                        this.stop()
+                        $('#start').show();
+                        dummy.remove()
+                    }
+                    count++
+                }
+            })
+            keyframe.start()
         }
 
         function startjQuery() {
             $('.dummy').each(function () {
                 var dummy = $(this)
-                var reverse = false;
-                run = true;
-
-                var animate = function () {
-                    if (!run && !reverse) return;
-                    if (reverse) {
-                        dummy.animate({ left: '0%', opacity: 0.65 }, 950, "swing", animate)
+                for (var i = 0; i < $('#animations').val(); i++) {
+                    if (!(i % 2)) {
+                        dummy.animate({ left: '85%', opacity: 1 }, 950, "swing")
                     } else {
-                        dummy.animate({ left: '85%', opacity: 1 }, 950, "swing", animate)
+                        dummy.animate({ left: '0%', opacity: 0.65 }, 950, "swing")
                     }
-                    reverse = !reverse
+                    if (i == $('#animations').val() - 1) {
+                        dummy.animate({ left: '0%', opacity: 0.65 }, 10, function () {
+                            $('#start').show();
+                            $('.dummy').remove()
+                        })
+                    }
                 }
-                animate()
+            }).first().animate({ left: '0%', opacity: 0.65 }, 10, function () {
+                $('#start').show();
+                dummy.remove()
             })
         }
 
-        function stopjQuery() {
-            run = false;
+        function startjQueryOptimal() {
+            var dummy = $('.dummy')
+            for (var i = 0; i < $('#animations').val(); i++) {
+                if (!(i % 2)) {
+                    dummy.animate({ left: '85%', opacity: 1 }, 950, "swing")
+                } else {
+                    dummy.animate({ left: '0%', opacity: 0.65 }, 950, "swing")
+                }
+            }
+            $('.dummy').first().animate({ left: '0%', opacity: 0.65 }, 10, function () {
+                $('#start').show();
+                dummy.remove()
+            })
         }
 
         function startVelocity() {
             $('.dummy').each(function () {
                 var dummy = $(this)
-                var reverse = false;
-                run = true;
-
-                var animate = function () {
-                    if (!run && !reverse) return;
-                    if (reverse) {
-                        dummy.velocity({ left: '0%', opacity: 0.65 }, { complete: animate, duration: 950, easing: "ease-in-out" })
+                for (var i = 0; i < $('#animations').val(); i++) {
+                    if (!(i % 2)) {
+                        dummy.velocity({ left: '85%', opacity: 1 }, { duration: 950, easing: "ease-in-out" })
                     } else {
-                        dummy.velocity({ left: '85%', opacity: 1 }, { complete: animate, duration: 950, easing: "ease-in-out" })
+                        dummy.velocity({ left: '0%', opacity: 0.65 }, { duration: 950, easing: "ease-in-out" })
                     }
-                    reverse = !reverse
                 }
-                animate()
+            }).first().velocity({ left: '0%', opacity: 0.65 }, {
+                duration: 10, complete: function () {
+                    $('#start').show();
+                    $('.dummy').remove()
+                }
             })
         }
 
-        function stopVelocity() {
-            run = false;
+        function startVelocityOptimal() {
+            var dummy = $('.dummy')
+            for (var i = 0; i < $('#animations').val(); i++) {
+                if (!(i % 2)) {
+                    dummy.velocity({ left: '85%', opacity: 1 }, { duration: 950, easing: "ease-in-out" })
+                } else {
+                    dummy.velocity({ left: '0%', opacity: 0.65 }, { duration: 950, easing: "ease-in-out" })
+                }
+            }
+            $('.dummy').first().velocity({ left: '0%', opacity: 0.65 }, {
+                duration: 10, complete: function () {
+                    $('#start').show();
+                    $('.dummy').remove()
+                }
+            })
         }
 
     </script>
