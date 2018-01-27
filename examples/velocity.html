@@ -11,27 +11,36 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
     <style>
-        .menu{
+        #menu{
             position: absolute;
-            left: 15px;
-            background: linear-gradient(to bottom, rgba(32,124,202,0.3) 0%,rgba(32,124,202,0.05) 100%);
+            left: 50%;
+            background: rgba(32,124,202,1);
             border: 1px solid #bbb;
             padding: 15px 0;
-            width: calc(20% - 15px);
-            top: 15px;
-            height: calc(100vh - 30px);
-
+            top: 50%;
+            transform: translateX(-50%) translateY(-50%);
+            border-radius: 10px;
+            color: #fff;
+            width: 300px;
         }
-        .droppoint {
-            height: calc(100vh - 30px);
-            left: calc(20% + 15px);
+
+        h1{
+            margin: 0 0 15px;
+            padding: 0 15px;
+            text-align: center;
+            font-size: 30px;
+        }
+        
+        #animation {
+            display: none;
+            height: 100vh;
+            left: 0;
             overflow-x: hidden;
             overflow-y: auto;
-            top: 15px;
+            top: 0;
             position: absolute;
-            width: calc(80% - 30px);
+            width: 100vw;
             padding: 15px;
-            border: 1px solid #bbb;
             min-width: 300px;
         }
 
@@ -50,52 +59,59 @@
             transform: translateZ(0); */
         }
 
-        #stop {
-            display: none;
+        .alert-warning{
+            font-weight: bold;
+        }
+
+        .btn{
+            width: 100%;
         }
     </style>
     <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
         crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.2/velocity.min.js"></script>
     <script src="../keyframe.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
 </head>
 
 <body>
-    <div class="menu">
+    <div id="menu">
+        <h1>Performance Comparison</h1>
         <div class="form-group col-xs-12">
             <label for="mode">Library</label>
-            <select id="mode" size="6" class="form-control">
+            <select id="mode" size="4" class="form-control">
                 <option selected="selected" value="keyopti">keyframe.js</option>
+                <option value="tween">Tween</option>
                 <option value="veloopti">Velocity</option>
                 <option value="jqueryopti">jQuery</option>
             </select>
         </div>
         <div class="form-group col-xs-12">
-            <label for="bubbles">Bubbles</label>
+            <label for="bubbles">Animated items</label>
             <select id="bubbles" size="6" class="form-control">
                 <option>100</option>
                 <option selected="selected">250</option>
                 <option>500</option>
                 <option>1000</option>
-                <option>2500 (not with jQuery)</option>
-                <option>5000 (not with jQuery)</option>
+                <option value="2500">2500 (not with jQuery)</option>
+                <option value="5000">5000 (not with jQuery)</option>
             </select>
         </div>
         <div class="form-group col-xs-12">
-            <label for="animations">Duration in seconds</label>
-            <select id="animations" size="2" class="form-control">
+            <label for="items">Specified runtime in seconds</label>
+            <select id="items" size="2" class="form-control">
                 <option selected="selected">4</option>
                 <option>10</option>
             </select>
         </div>
         <div style="display: none;" class="form-group col-xs-12">
-            Real Duration: <span id="duration"></span> seconds
+            <div class="    alert alert-warning">Effective runtime: <span id="duration"></span> seconds</div>
         </div> 
         <div class="form-group col-xs-12">
-            <button id="start" class="btn-primary btn">Start</button>
+            <button id="start" class="btn-success btn">Start</button>
         </div>
     </div>
-    <div class="droppoint">
+    <div id="animation">
     </div>
 
     <script>
@@ -104,6 +120,9 @@
         var startTime, endTime;
 
         function start() {
+            $('#menu').hide();
+
+            $('#animation').show();
             startTime = new Date();
         };
 
@@ -113,26 +132,19 @@
             timeDiff /= 1000;
 
             $('#duration').html(timeDiff);
-            $('#duration').parent().show();
+            $('#duration').parent().parent().show();
+            $('#menu').show();
+            $('#animation').hide();
         }
 
 
         $('#start').click(function () {
             $('#start').hide();
-            for (var i = 0; i < $('#bubbles').val(); i++) {
-                $('.droppoint').append('<div class="dummy"></div>')
-            }
             start();
+            for (var i = 0; i < $('#bubbles').val(); i++) {
+                $('#animation').append('<div class="dummy"></div>')
+            }
             switch ($('#mode').val()) {
-                case 'KeyframeJS':
-                    startKeyframeJS();
-                    break;
-                case 'jQuery':
-                    startjQuery();
-                    break;
-                case 'Velocity':
-                    startVelocity();
-                    break;
                 case 'keyopti':
                     startKeyframeJSOptimal();
                     break;
@@ -142,9 +154,70 @@
                 case 'jqueryopti':
                     startjQueryOptimal();
                     break;
+                case 'tween':
+                    startTween();
+                    break;
 
             }
         })
+
+        function startTween(){
+
+			function init() {
+
+                var dummy = $('.dummy')
+                var params = { x: 0, y: 0.65 }
+
+                var count = 0;
+
+				var tween = new TWEEN.Tween( params )
+					.to( { x: 85, y:1 }, 1000 )
+					.easing( TWEEN.Easing.Quadratic.InOut )
+					.onUpdate( function (object) {
+                        dummy.css('left', object.x + '%')
+
+                        dummy.css('opacity', object.y)
+						
+
+					} ).onStart(function(){
+                        if (count > $('#items').val() - 1) {
+                            tween.stop()
+                            end()
+                        $('#start').show();
+                        dummy.remove()
+                        }
+                        count++
+                    })
+                    .start();
+                    var tweenBack = new TWEEN.Tween( params )
+					.to( { x: 0, y:0.65 }, 1000 )
+					.easing( TWEEN.Easing.Quadratic.InOut )
+					.onUpdate( function (object) {
+                        dummy.css('left', object.x + '%')
+
+                        dummy.css('opacity', object.y)
+
+						
+
+					}).onStart(function(){
+
+                        count++
+                    })
+
+					tween.chain(tweenBack);
+                    tweenBack.chain(tween);
+                    tween.start()
+			}
+
+			function animate( time ) {
+				requestAnimationFrame( animate );
+				TWEEN.update( time );
+            }
+            
+
+            init();
+			animate();
+        }
 
         function startKeyframeJSOptimal() {
             var count = 0;
@@ -162,9 +235,10 @@
                     dummy.css('opacity', value)
                 }, 'keyframes': [[1, 1, 'easeInOutQuad']]
             }
+            
             keyframe = new KeyframeJs(channels, {
                 mode: 'loopReverse', onLoop: function () {
-                    if (count == $('#animations').val() - 1) {
+                    if (count == $('#items').val() - 1) {
                         this.stop()
                         end();
                         $('#start').show();
@@ -178,7 +252,7 @@
 
         function startjQueryOptimal() {
             var dummy = $('.dummy')
-            for (var i = 0; i < $('#animations').val(); i++) {
+            for (var i = 0; i < $('#items').val(); i++) {
                 if (!(i % 2)) {
                     dummy.animate({ left: '85%', opacity: 1 }, 1000, "swing")
                 } else {
@@ -194,7 +268,7 @@
 
         function startVelocityOptimal() {
             var dummy = $('.dummy')
-            for (var i = 0; i < $('#animations').val(); i++) {
+            for (var i = 0; i < $('#items').val(); i++) {
                 if (!(i % 2)) {
                     dummy.velocity({ left: '85%', opacity: 1 }, { duration: 1000, easing: "ease-in-out" })
                 } else {

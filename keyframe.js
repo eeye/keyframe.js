@@ -192,6 +192,7 @@ KeyframeJs = function(channels, options) {
     _pause = false,
     _mode = _options.mode,
     _that = this
+    _skip = false;
   function init() {
     getDuration()
   }
@@ -210,12 +211,12 @@ KeyframeJs = function(channels, options) {
   function end() {
     switch (_mode) {
       case 'loopReverse':
+      _options.onLoop.call(_that)
         _that.reverse()
-        _options.onLoop.call(_that)
         break
       case 'loop':
+      _options.onLoop.call(_that)
         _that.reset()
-        _options.onLoop.call(_that)
         break
       case 'stop':
         _that.stop()
@@ -247,7 +248,7 @@ KeyframeJs = function(channels, options) {
           : (_current_time - keyframe.from_time) / time_distance
       value = keyframe.from_value + value_distance * fraction
     }
-    channel.onUpdate.call(_that, value)
+    channel.onUpdate(value)
   }
 
   function getKeyFrame(channel) {
@@ -280,14 +281,13 @@ KeyframeJs = function(channels, options) {
       keyframe.till_time = keyframe.from_time
       keyframe.till_value = keyframe.from_value
     }
-
     return keyframe
   }
 
   function animate(now) {
     if (!_run) return
-    requestAnimationFrame(animate)
     _that.update(now)
+    requestAnimationFrame(animate)
   }
 
   this.update = function(now) {
@@ -311,6 +311,7 @@ KeyframeJs = function(channels, options) {
       updateChannel(_channels[key])
     }
     _options.onUpdate.call(_that, passed)
+    _skip = !_skip
     if (
       (_current_time === _duration && _direction > 0) ||
       (_current_time === 0 && _direction < 0)
