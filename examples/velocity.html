@@ -11,9 +11,28 @@
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u"
         crossorigin="anonymous">
     <style>
+        .menu{
+            position: absolute;
+            left: 15px;
+            background: linear-gradient(to bottom, rgba(32,124,202,0.3) 0%,rgba(32,124,202,0.05) 100%);
+            border: 1px solid #bbb;
+            padding: 15px 0;
+            width: calc(20% - 15px);
+            top: 15px;
+            height: calc(100vh - 30px);
+
+        }
         .droppoint {
-            height: 50vh;
-            overflow: auto;
+            height: calc(100vh - 30px);
+            left: calc(20% + 15px);
+            overflow-x: hidden;
+            overflow-y: auto;
+            top: 15px;
+            position: absolute;
+            width: calc(80% - 30px);
+            padding: 15px;
+            border: 1px solid #bbb;
+            min-width: 300px;
         }
 
         .dummy {
@@ -26,7 +45,7 @@
             height: 15px;
             margin-bottom: 3px;
             border-radius: 15px;
-            background-color: #3a3a3a;
+            background-color: #be1818;
             /* 
             transform: translateZ(0); */
         }
@@ -42,45 +61,60 @@
 </head>
 
 <body>
-    <div class="container">
-        <div class="row">
-            <div class="form-group col-xs-4">
-                <label for="mode">mode</label>
-                <select id="mode" size="6" class="form-control">
-                    <option selected="selected">KeyframeJS</option>
-                    <option value="keyopti">KeyframeJS (optimal)</option>
-                    <option>Velocity</option>
-                    <option value="veloopti">Velocity (optimal)</option>
-                    <option>jQuery</option>
-                    <option value="jqueryopti">jQuery (optimal)</option>
-                </select>
-            </div>
-            <div class="form-group col-xs-4">
-                <label for="bubbles">Bubbles</label>
-                <select id="bubbles" size="6" class="form-control">
-                    <option>100</option>
-                    <option selected="selected">250</option>
-                    <option>500</option>
-                    <option>1000</option>
-                    <option>2500</option>
-                    <option>5000</option>
-                </select>
-            </div>
-            <div class="form-group col-xs-4">
-                <label for="animations">Loops</label>
-                <select id="animations" size="2" class="form-control">
-                    <option selected="selected">4</option>
-                    <option>10</option>
-                </select>
-            </div>
-            <button id="start" class="button btn">Start</button>
+    <div class="menu">
+        <div class="form-group col-xs-12">
+            <label for="mode">Library</label>
+            <select id="mode" size="6" class="form-control">
+                <option selected="selected" value="keyopti">keyframe.js</option>
+                <option value="veloopti">Velocity</option>
+                <option value="jqueryopti">jQuery</option>
+            </select>
+        </div>
+        <div class="form-group col-xs-12">
+            <label for="bubbles">Bubbles</label>
+            <select id="bubbles" size="6" class="form-control">
+                <option>100</option>
+                <option selected="selected">250</option>
+                <option>500</option>
+                <option>1000</option>
+                <option>2500 (not with jQuery)</option>
+                <option>5000 (not with jQuery)</option>
+            </select>
+        </div>
+        <div class="form-group col-xs-12">
+            <label for="animations">Duration in seconds</label>
+            <select id="animations" size="2" class="form-control">
+                <option selected="selected">4</option>
+                <option>10</option>
+            </select>
+        </div>
+        <div style="display: none;" class="form-group col-xs-12">
+            Real Duration: <span id="duration"></span> seconds
+        </div> 
+        <div class="form-group col-xs-12">
+            <button id="start" class="btn-primary btn">Start</button>
         </div>
     </div>
-    <div class="container droppoint">
+    <div class="droppoint">
     </div>
 
     <script>
         var keyframe;
+
+        var startTime, endTime;
+
+        function start() {
+            startTime = new Date();
+        };
+
+        function end() {
+            endTime = new Date();
+            var timeDiff = endTime - startTime;
+            timeDiff /= 1000;
+
+            $('#duration').html(timeDiff);
+            $('#duration').parent().show();
+        }
 
 
         $('#start').click(function () {
@@ -88,6 +122,7 @@
             for (var i = 0; i < $('#bubbles').val(); i++) {
                 $('.droppoint').append('<div class="dummy"></div>')
             }
+            start();
             switch ($('#mode').val()) {
                 case 'KeyframeJS':
                     startKeyframeJS();
@@ -111,37 +146,6 @@
             }
         })
 
-        function startKeyframeJS() {
-            $('.dummy').each(function () {
-                var count = 0;
-                var channels = {}
-                var dummy = $(this)
-
-                channels['left'] = {
-                    'start_value': 0, 'onUpdate': function (value) {
-                        dummy.css('left', value + '%')
-                    }, 'keyframes': [[0.95, 85, 'easeInOutQuad']]
-                }
-
-                channels['opacity'] = {
-                    'start_value': 0.65, 'onUpdate': function (value) {
-                        dummy.css('opacity', value)
-                    }, 'keyframes': [[0.95, 1, 'easeInOutQuad']]
-                }
-                keyframe = new KeyframeJs(channels, {
-                    mode: 'loopReverse', onLoop: function () {
-                        if (count == $('#animations').val() - 1) {
-                            this.stop()
-                            $('#start').show();
-                            $('.dummy').remove()
-                        }
-                        count++
-                    }
-                })
-                keyframe.start()
-            })
-        }
-
         function startKeyframeJSOptimal() {
             var count = 0;
             var channels = {}
@@ -150,18 +154,19 @@
             channels['left'] = {
                 'start_value': 0, 'onUpdate': function (value) {
                     dummy.css('left', value + '%')
-                }, 'keyframes': [[0.95, 85, 'easeInOutQuad']]
+                }, 'keyframes': [[1, 85, 'easeInOutQuad']]
             }
 
             channels['opacity'] = {
                 'start_value': 0.65, 'onUpdate': function (value) {
                     dummy.css('opacity', value)
-                }, 'keyframes': [[0.95, 1, 'easeInOutQuad']]
+                }, 'keyframes': [[1, 1, 'easeInOutQuad']]
             }
             keyframe = new KeyframeJs(channels, {
                 mode: 'loopReverse', onLoop: function () {
                     if (count == $('#animations').val() - 1) {
                         this.stop()
+                        end();
                         $('#start').show();
                         dummy.remove()
                     }
@@ -171,58 +176,19 @@
             keyframe.start()
         }
 
-        function startjQuery() {
-            $('.dummy').each(function () {
-                var dummy = $(this)
-                for (var i = 0; i < $('#animations').val(); i++) {
-                    if (!(i % 2)) {
-                        dummy.animate({ left: '85%', opacity: 1 }, 950, "swing")
-                    } else {
-                        dummy.animate({ left: '0%', opacity: 0.65 }, 950, "swing")
-                    }
-                    if (i == $('#animations').val() - 1) {
-                        dummy.animate({ left: '0%', opacity: 0.65 }, 10, function () {
-                            $('#start').show();
-                            $('.dummy').remove()
-                        })
-                    }
-                }
-            }).first().animate({ left: '0%', opacity: 0.65 }, 10, function () {
-                $('#start').show();
-                dummy.remove()
-            })
-        }
-
         function startjQueryOptimal() {
             var dummy = $('.dummy')
             for (var i = 0; i < $('#animations').val(); i++) {
                 if (!(i % 2)) {
-                    dummy.animate({ left: '85%', opacity: 1 }, 950, "swing")
+                    dummy.animate({ left: '85%', opacity: 1 }, 1000, "swing")
                 } else {
-                    dummy.animate({ left: '0%', opacity: 0.65 }, 950, "swing")
+                    dummy.animate({ left: '0%', opacity: 0.65 }, 1000, "swing")
                 }
             }
             $('.dummy').first().animate({ left: '0%', opacity: 0.65 }, 10, function () {
+                end();
                 $('#start').show();
                 dummy.remove()
-            })
-        }
-
-        function startVelocity() {
-            $('.dummy').each(function () {
-                var dummy = $(this)
-                for (var i = 0; i < $('#animations').val(); i++) {
-                    if (!(i % 2)) {
-                        dummy.velocity({ left: '85%', opacity: 1 }, { duration: 950, easing: "ease-in-out" })
-                    } else {
-                        dummy.velocity({ left: '0%', opacity: 0.65 }, { duration: 950, easing: "ease-in-out" })
-                    }
-                }
-            }).first().velocity({ left: '0%', opacity: 0.65 }, {
-                duration: 10, complete: function () {
-                    $('#start').show();
-                    $('.dummy').remove()
-                }
             })
         }
 
@@ -230,13 +196,14 @@
             var dummy = $('.dummy')
             for (var i = 0; i < $('#animations').val(); i++) {
                 if (!(i % 2)) {
-                    dummy.velocity({ left: '85%', opacity: 1 }, { duration: 950, easing: "ease-in-out" })
+                    dummy.velocity({ left: '85%', opacity: 1 }, { duration: 1000, easing: "ease-in-out" })
                 } else {
-                    dummy.velocity({ left: '0%', opacity: 0.65 }, { duration: 950, easing: "ease-in-out" })
+                    dummy.velocity({ left: '0%', opacity: 0.65 }, { duration: 1000, easing: "ease-in-out" })
                 }
             }
             $('.dummy').first().velocity({ left: '0%', opacity: 0.65 }, {
                 duration: 10, complete: function () {
+                    end();
                     $('#start').show();
                     $('.dummy').remove()
                 }
