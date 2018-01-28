@@ -173,6 +173,7 @@ KeyframeJs = function(channels, options) {
     onLoop:
       typeof options.onLoop === 'function' ? options.onLoop : function() {},
     onEnd: typeof options.onEnd === 'function' ? options.onEnd : function() {},
+    onAnimate: typeof options.onAnimate === 'function' ? options.onAnimate : function() {},
     mode:
       ['loopReverse', 'loop', 'stop'].indexOf(options.mode) > -1
         ? options.mode
@@ -286,8 +287,9 @@ KeyframeJs = function(channels, options) {
 
   function animate(now) {
     if (!_run) return
-    _that.update(now)
     requestAnimationFrame(animate)
+    _that.update(now)
+    _options.onAnimate(now)
   }
 
   this.update = function(now) {

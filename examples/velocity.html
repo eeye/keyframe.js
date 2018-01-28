@@ -72,6 +72,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/velocity/1.2.2/velocity.min.js"></script>
     <script src="../keyframe.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/17.2.0/Tween.min.js"></script>
+    <script src="js/stats.js"></script>
 </head>
 
 <body>
@@ -89,19 +90,20 @@
         <div class="form-group col-xs-12">
             <label for="bubbles">Animated items</label>
             <select id="bubbles" size="6" class="form-control">
-                <option>100</option>
                 <option selected="selected">250</option>
                 <option>500</option>
                 <option>1000</option>
                 <option value="2500">2500 (not with jQuery)</option>
                 <option value="5000">5000 (not with jQuery)</option>
+                <option value="10000">10000 (not with jQuery)</option>
             </select>
         </div>
         <div class="form-group col-xs-12">
             <label for="items">Specified runtime in seconds</label>
-            <select id="items" size="2" class="form-control">
+            <select id="items" size="3" class="form-control">
                 <option selected="selected">4</option>
                 <option>10</option>
+                <option>30</option>
             </select>
         </div>
         <div style="display: none;" class="form-group col-xs-12">
@@ -115,11 +117,22 @@
     </div>
 
     <script>
+
+    
         var keyframe;
 
         var startTime, endTime;
 
+        var stats;
+
         function start() {
+            stats = new Stats();
+            var sds = stats.domElement.style;
+            sds.position = 'absolute';
+            sds.right = '0px';
+            sds.top = '0px';
+            sds.margin = '4em 3em';
+            document.body.appendChild(stats.domElement);
             $('#menu').hide();
 
             $('#animation').show();
@@ -127,6 +140,7 @@
         };
 
         function end() {
+            $(stats.domElement).remove()
             endTime = new Date();
             var timeDiff = endTime - startTime;
             timeDiff /= 1000;
@@ -212,6 +226,7 @@
 			function animate( time ) {
 				requestAnimationFrame( animate );
 				TWEEN.update( time );
+				stats.update();
             }
             
 
@@ -245,6 +260,9 @@
                         dummy.remove()
                     }
                     count++
+                }, onAnimate: function(){
+
+				stats.update();
                 }
             })
             keyframe.start()
